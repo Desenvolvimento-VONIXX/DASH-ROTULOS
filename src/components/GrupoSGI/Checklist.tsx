@@ -38,6 +38,7 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
     const dataAtual = getCurrentDate();
 
     const { data: perguntas } = useGetPerguntasChecklist(idChecklist);
+    console.log(dataAtual)
 
     useEffect(() => {
         const fetchChecklists = async () => {
@@ -258,7 +259,6 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
                                                 </label>
                                             ))}
                                         </div>
-
                                         <Textarea
                                             className="mt-2 w-full p-2 border border-gray-300 rounded-md"
                                             placeholder="Observação"
