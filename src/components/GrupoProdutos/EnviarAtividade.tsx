@@ -204,11 +204,15 @@ const EnviarAtividade: React.FC<Props> = ({ open, onClose, idClick, refetchRotul
                                                             <p className="text-center justify-center items-center">
                                                                 {field.value && field.value.length > 0
                                                                     ? field.value.map((file, index) => (
-                                                                        <span key={index} className="block">{`📄 ${file.name}`}</span>
+                                                                        <span key={index} className="block">
+                                                                            📄 {file.name.length > 20
+                                                                                ? `${file.name.slice(0, 15)}...${file.name.slice(file.name.lastIndexOf("."))}`
+                                                                                : file.name}
+                                                                        </span>
                                                                     ))
                                                                     : "Nenhum arquivo adicionado"}
                                                             </p>
- 
+
 
                                                         </div>
                                                         <input

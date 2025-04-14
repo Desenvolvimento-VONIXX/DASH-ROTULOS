@@ -14,6 +14,7 @@ import { useGetProdutos } from "@/hook/getProdutos";
 import { getCurrentDate } from "@/utils/nowDate";
 import { toast } from "sonner";
 import { getUsuLog } from "@/utils/usuarioLogado";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 
 interface Props {
     open: boolean;
@@ -41,12 +42,14 @@ const NewRotulo: React.FC<Props> = ({ open, onClose, refetch }) => {
         codProd: z.number().nullable().refine(val => val !== null, {
             message: "Selecione um produto",
         }),
+        desenvolvimento: z.string()
     });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             codProd: undefined,
+            desenvolvimento: "N"
         },
     });
 
@@ -56,6 +59,7 @@ const NewRotulo: React.FC<Props> = ({ open, onClose, refetch }) => {
             const response = await JX.salvar(
                 {
                     CODPROD: values.codProd,
+                    DESENVOLVIMENTO: values.desenvolvimento,
                     STATUS: "PENDENTE",
                     DATA_CRIACAO: dataAtual,
                     CODUSU: codUsu,
@@ -165,6 +169,31 @@ const NewRotulo: React.FC<Props> = ({ open, onClose, refetch }) => {
                                                         </Command>
                                                     </PopoverContent>
                                                 </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-4 mt-3">
+                                    <FormField
+                                        control={form.control}
+                                        name="desenvolvimento"
+                                        render={({ field }) => (
+                                            <FormItem className="w-full">
+                                                <FormLabel>Desenvolvimento?</FormLabel>
+                                                <Select onValueChange={field.onChange}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione um opção" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>Selecionar</SelectLabel>
+                                                            <SelectItem value="S">Sim</SelectItem>
+                                                            <SelectItem value="N">Não</SelectItem>
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

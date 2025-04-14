@@ -8,6 +8,7 @@ import { getCurrentDate } from "@/utils/nowDate";
 import { toast } from "sonner";
 import { getUsuLog } from "@/utils/usuarioLogado";
 import { CheckCircle, MoveLeft } from "lucide-react";
+import { useGetRespostasCheckLog } from "@/hook/GrupoSGI/getLogRespostas";
 
 
 interface Props {
@@ -33,11 +34,14 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
     const [idChecklist, setIdChecklist] = useState<number | null>(null);
     const [checklists, setChecklists] = useState<Checklist[] | null>(null);
     const [loading, setLoading] = useState(true);
-    const [respostas, setRespostas] = useState<{ [key: number]: { resposta: string; observacao: string } }>({});
+    const [respostas, setRespostas] = useState<{ [key: number]: { resposta: string; observacao: string, idLog?: number } }>({});
     const codUsuLog = getUsuLog();
     const dataAtual = getCurrentDate();
 
-    const { data: perguntas } = useGetPerguntasChecklist(idChecklist);
+    const { data: respostasLog, refetch: refetchRespostaLog } = useGetRespostasCheckLog(idClick, idAtividade);
+
+
+    const { data: perguntas, refetch: refetchPerguntasCheck } = useGetPerguntasChecklist(idChecklist);
     console.log(dataAtual)
 
     useEffect(() => {
@@ -51,19 +55,66 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
         fetchChecklists();
     }, []);
 
+    useEffect(() => {
+        if (respostasLog && respostasLog.length > 0 && idChecklist === null) {
+            setIdChecklist(respostasLog[0].ID_CHECKLIST);
+        }
+    }, [respostasLog]);
+
+
+    useEffect(() => {
+        if (idChecklist && respostasLog && respostasLog.length > 0) {
+            const respostasPreenchidas: {
+                [key: number]: { resposta: string; observacao: string; idLog?: number };
+            } = {};
+
+            respostasLog.forEach((item: any) => {
+                if (item.ID_CHECKLIST === idChecklist) {
+                    respostasPreenchidas[item.ID_PERGUNTA] = {
+                        resposta: item.RESPOSTA,
+                        observacao: item.OBS || "",
+                        idLog: item.ID_LOG,
+                    };
+                }
+            });
+
+            setRespostas(respostasPreenchidas);
+        }
+
+    }, [idChecklist, respostasLog]);
+
+
     const handleRespostaChange = (idPergunta: number, resposta: string) => {
-        setRespostas((prev) => ({
-            ...prev,
-            [idPergunta]: { ...prev[idPergunta], resposta },
-        }));
+        setRespostas((prev) => {
+            const novaResposta = { ...prev[idPergunta], resposta };
+            salvarLogResposta({
+                idPergunta,
+                resposta,
+                observacao: novaResposta.observacao,
+            });
+            return {
+                ...prev,
+                [idPergunta]: novaResposta,
+            };
+        });
     };
 
+
     const handleObservacaoChange = (idPergunta: number, observacao: string) => {
-        setRespostas((prev) => ({
-            ...prev,
-            [idPergunta]: { ...prev[idPergunta], observacao },
-        }));
+        setRespostas((prev) => {
+            const novaResposta = { ...prev[idPergunta], observacao };
+            salvarLogResposta({
+                idPergunta,
+                resposta: novaResposta.resposta,
+                observacao,
+            });
+            return {
+                ...prev,
+                [idPergunta]: novaResposta,
+            };
+        });
     };
+
 
     const todasRespondidas = perguntas?.every((item: any) => respostas[item.ID_PERGUNTA]?.resposta);
 
@@ -194,6 +245,107 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
         }
     };
 
+    const salvarLogResposta = async ({
+        idPergunta,
+        resposta,
+        observacao,
+    }: {
+        idPergunta: number;
+        resposta?: string;
+        observacao?: string;
+    }) => {
+        try {
+            const idLogExistente = respostas[idPergunta]?.idLog;
+
+            const dados = {
+                ID_ROTULO: idClick,
+                ID_ATIVIDADE: idAtividade,
+                ID_CHECKLIST: idChecklist,
+                ID_PERGUNTA: idPergunta,
+                RESPOSTA: resposta || "",
+                OBS: observacao || "",
+            };
+
+            const chaves = idLogExistente
+                ? [{ ID_LOG: idLogExistente }]
+                : [];
+
+            const response = await JX.salvar(dados, "AD_LOGRESPCHECK", chaves);
+
+            if (response.status === "1" && !idLogExistente) {
+                const novoId = response.responseBody?.entities?.entity?.ID_LOG?.$;
+                if (novoId) {
+                    setRespostas((prev) => ({
+                        ...prev,
+                        [idPergunta]: {
+                            ...prev[idPergunta],
+                            idLog: novoId,
+                        },
+                    }));
+                }
+            }
+
+            console.log(idLogExistente ? "Registro atualizado no log." : "Registro criado no log.");
+        } catch (error) {
+            console.error("Erro ao salvar log:", error);
+        }
+    };
+
+
+    const desfazerAlteracoes = async () => {
+        if (!respostas || Object.keys(respostas).length === 0) {
+            toast.warning("Nenhuma alteração para desfazer.");
+            return;
+        }
+
+        try {
+            const deletarArray = Object.entries(respostas)
+                .map(([idPergunta, resposta]) => {
+                    if (resposta.idLog) {
+                        return {
+                            ID_ROTULO: idClick,
+                            ID_ATIVIDADE: idAtividade,
+                            ID_CHECKLIST: idChecklist,
+                            ID_PERGUNTA: Number(idPergunta),
+                            ID_LOG: resposta.idLog,
+                        };
+                    }
+                    return null;
+                })
+                .filter((item): item is {
+                    ID_ROTULO: number;
+                    ID_ATIVIDADE: number;
+                    ID_CHECKLIST: number;
+                    ID_PERGUNTA: number;
+                    ID_LOG: number;
+                } => item !== null)
+
+
+            if (deletarArray.length === 0) {
+                toast.warning("Nenhum registro com ID_LOG encontrado para deletar.");
+                return;
+            }
+
+            const deletar = await JX.deletar("AD_LOGRESPCHECK", deletarArray);
+
+            if (deletar.status === "1") {
+                setRespostas({});
+                setIdChecklist(null);
+                refetchRespostaLog();
+                refetchPerguntasCheck();
+                toast.success("Alterações desfeitas com sucesso!");
+            } else {
+                toast.error("Erro ao desfazer alterações.");
+            }
+        } catch (error) {
+            console.error("Erro ao deletar log:", error);
+            toast.error("Erro ao desfazer alterações.");
+        }
+    };
+
+
+
+
     return (
         <Sheet open={open} onOpenChange={() => !isSaving && onClose()}>
             <SheetContent className="min-w-[50%] p-6">
@@ -227,9 +379,17 @@ const Checklist: React.FC<Props> = ({ open, onClose, idClick, idAtividade, refet
                         <div className="p-5 rounded-sm">
                             {perguntas && perguntas.length > 0 && (
                                 <>
-                                    <Button onClick={() => { setIdChecklist(null), setRespostas([]) }} variant={"outline"} className="p-2">
-                                        <MoveLeft /> Voltar
-                                    </Button>
+                                    {Object.values(respostas).some((r) => r.resposta) ? (
+                                        <Button onClick={desfazerAlteracoes} variant={"outline"} className="p-2">
+                                            🗑️ Desfazer alterações
+                                        </Button>
+                                    ) : (
+                                        <Button onClick={() => { setIdChecklist(null), setRespostas([]) }} variant={"outline"} className="p-2">
+                                            <MoveLeft /> Voltar
+                                        </Button>
+                                    )}
+
+
                                     <div className="bg-gray-200 p-4 rounded-md mb-6 mt-6">
                                         <p className="text-md text-gray-700 uppercase">
                                             <strong>Checklist:</strong> {perguntas[0].NOME}

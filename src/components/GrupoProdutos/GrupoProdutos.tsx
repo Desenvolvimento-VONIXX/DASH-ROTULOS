@@ -25,6 +25,7 @@ interface Rotulo {
     ABERTOPDI: string;
     DATA_ENVIO: string;
     DATA_FINALIZACAO: string;
+    DESENVOLVIMENTO: string;
 }
 
 const GrupoProduto: React.FC<Props> = () => {
@@ -80,12 +81,12 @@ const GrupoProduto: React.FC<Props> = () => {
     const filteredRotulos = (rotulos || []).filter((rotulo: Rotulo) => {
         const dataEnvio = rotulo.DATA_ENVIO ? (rotulo.DATA_ENVIO, "dd/MM/yyyy", new Date()) : null;
         const dataFinalizacao = rotulo.DATA_FINALIZACAO ? (rotulo.DATA_FINALIZACAO, "dd/MM/yyyy", new Date()) : null;
-        
+
         const filtroDataEnvio =
             dateInicial?.from && dataEnvio
                 ? dataEnvio >= dateInicial.from && (!dateInicial.to || dataEnvio <= dateInicial.to)
-                : !dateInicial?.from; 
- 
+                : !dateInicial?.from;
+
         const filtroDataFinalizacao =
             dateFinal?.from && dataFinalizacao
                 ? dataFinalizacao >= dateFinal.from && (!dateFinal.to || dataFinalizacao <= dateFinal.to)
@@ -270,6 +271,10 @@ const GrupoProduto: React.FC<Props> = () => {
 
                                 {rotulo.ABERTOPDI === 'S' && (
                                     <span className="font-extralight text-[12px] ">Rótulo aberto pelo PDI</span>
+                                )}
+
+                                {rotulo.DESENVOLVIMENTO === 'S' && (
+                                    <span className="font-extralight text-[12px] ">Desenvolvimento*</span>
                                 )}
 
                                 <CardDescription

@@ -24,6 +24,7 @@ interface Rotulo {
     ABERTOPDI: string;
     DATA_ENVIO: string;
     DATA_FINALIZACAO: string;
+    DESENVOLVIMENTO: string;
 }
 
 const GrupoSGI: React.FC<Props> = () => {
@@ -104,6 +105,7 @@ const GrupoSGI: React.FC<Props> = () => {
         );
     });
 
+    
 
     return (
         <>
@@ -258,6 +260,11 @@ const GrupoSGI: React.FC<Props> = () => {
                                         <span className=" font-bold ml-1">{rotulo.DATA_FINALIZACAO}</span>
                                     </p>
                                 )}
+
+                                {rotulo.DESENVOLVIMENTO === 'S' && (
+                                    <span className="font-extralight text-[12px] ">Desenvolvimento*</span>
+                                )}
+                                
                                 <CardDescription
                                     className={`mt-2 text-sm font-medium ${rotulo.STATUS2.includes("Pendente de Avaliação")
                                         ? "text-yellow-600"

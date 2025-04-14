@@ -10,6 +10,7 @@ interface IResponse {
     ABERTOPDI: string;
     DATA_ENVIO: string;
     DATA_FINALIZACAO: string;
+    DESENVOLVIMENTO: string;
 }
 
 const fetchRotulos = async (): Promise<IResponse[]> => {
@@ -19,6 +20,7 @@ const fetchRotulos = async (): Promise<IResponse[]> => {
         ROT.ABERTOPDI, 
         ROT.CODPROD, 
         PRO.DESCRPROD, 
+        ROT.DESENVOLVIMENTO,
         FORMAT(ROT.DATA_FINALIZACAO, 'dd/MM/yyyy HH:mm') AS DATA_FINALIZACAO, 
         FORMAT(ROT.DATA_ENVIO, 'dd/MM/yyyy HH:mm') AS DATA_ENVIO, 
         SANKHYA.OPTION_LABEL('AD_ROTULOS', 'STATUS', ROT.STATUS) AS STATUS2 
