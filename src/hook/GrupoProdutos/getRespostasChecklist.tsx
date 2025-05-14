@@ -1,9 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 
-const fetchRespostasCheck = async (idClick?: number | null, idAtividade?: number | null) => {
-    const response = await JX.consultar(
-        `SELECT 
+const fetchRespostasCheck = async (
+  idClick?: number | null,
+  idAtividade?: number | null
+) => {
+  const response = await JX.consultar(
+    `SELECT 
         RESP.ID_CKECKLIST, 
+        CONCAT(PRO.CODPROD,' - ',PRO.DESCRPROD) AS PROD, 
         CHECKSGI.NOME, 
         PERG.ID_PERGUNTA, 
         PERG.PERGUNTA, 
@@ -16,18 +20,23 @@ const fetchRespostasCheck = async (idClick?: number | null, idAtividade?: number
         INNER JOIN AD_CHECKLISTSGI CHECKSGI ON CHECKSGI.ID_CKECKLIST = RESP.ID_CKECKLIST 
         INNER JOIN AD_PERGUNTASSGI PERG ON PERG.ID_PERGUNTA = RESP.ID_PERGUNTA 
         INNER JOIN TSIUSU USU ON USU.CODUSU = ROT_ATV.CODUSU 
+        INNER JOIN AD_ROTULOS ROT ON ROT.ID_ROTULO = ROT_ATV.ID_ROTULO 
+        INNER JOIN TGFPRO PRO ON ROT.CODPROD = PRO.CODPROD 
         WHERE 
         ROT_ATV.ID_ROTULO = ${idClick} 
         AND ROT_ATV.ID_ATIVIDADE = ${idAtividade}`
-    );
-    return response;
+  );
+  return response;
 };
 
-export function useGetRespostasCheck(idClick?: number | null, idAtividade?: number | null) {
-    return useQuery({
-        queryKey: ["respostas", idClick, idAtividade],
-        queryFn: () => fetchRespostasCheck(idClick, idAtividade),
-        retry: false,
-        enabled: !!idClick && !!idAtividade,
-    });
+export function useGetRespostasCheck(
+  idClick?: number | null,
+  idAtividade?: number | null
+) {
+  return useQuery({
+    queryKey: ["respostas", idClick, idAtividade],
+    queryFn: () => fetchRespostasCheck(idClick, idAtividade),
+    retry: false,
+    enabled: !!idClick && !!idAtividade,
+  });
 }

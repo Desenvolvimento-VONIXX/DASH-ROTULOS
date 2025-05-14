@@ -3,11 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 interface IResponse {
   CODPROD: number;
   DESCRPROD: string;
-
 }
 const fetchProdutos = async (): Promise<IResponse[]> => {
   const response = await JX.consultar(
-    "SELECT CODPROD, DESCRPROD  FROM TGFPRO WHERE DESCRPROD LIKE 'ROT %'"
+    "SELECT CODPROD, DESCRPROD  FROM TGFPRO WHERE DESCRPROD LIKE 'ROT %' OR DESCRPROD LIKE 'CART %'"
   );
 
   return response;
@@ -15,7 +14,6 @@ const fetchProdutos = async (): Promise<IResponse[]> => {
 
 export const useGetProdutos = () => {
   return useQuery<IResponse[], Error>({
-
     queryKey: ["produtos"],
     queryFn: fetchProdutos,
     retry: false,
